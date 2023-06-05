@@ -28,97 +28,109 @@ public class LoopTest : MonoBehaviour
     private Mesh SubdivideOnce(Mesh mesh)
     {
         Mesh newMesh = new Mesh();
+        newMesh.vertices = mesh.vertices;
+        newMesh.triangles = mesh.triangles;
+        newMesh.uv = mesh.uv;
+        newMesh.tangents = mesh.tangents;
+
+
         List<Vector3> vertices = new List<Vector3>(mesh.vertices);
         List<int> triangles = new List<int>(mesh.triangles);
+        List<Vector2> uvs = new List<Vector2>(mesh.uv);
+        List<Vector4> tangents = new List<Vector4>(mesh.tangents);
+
+
+        // Make sure that the uvs list has the same number of elements as the vertices list
+        if (uvs.Count < vertices.Count)
+        {
+            for (int i = uvs.Count; i < vertices.Count; i++)
+            {
+                uvs.Add(Vector2.zero);
+            }
+        }
 
         int originalVertexCount = vertices.Count;
         int originalTriangleCount = triangles.Count / 3;
 
-        // Créer un nouveau point pour chaque face
-        for (int i = 0; i < originalTriangleCount; i++)
-        {
-            int v1 = triangles[i * 3];
-            int v2 = triangles[i * 3 + 1];
-            int v3 = triangles[i * 3 + 2];
+        List<int> newTriangles = new List<int>();
+        List<Vector2> newUVs = new List<Vector2>();
 
-            Vector3 facePoint = (vertices[v1] + vertices[v2] + vertices[v3]) / 3f;
-            vertices.Add(facePoint);
+        int triangleCount = triangles.Count;
+        for (int i = 0; i < triangleCount; i += 3)
+        {
+            int v1 = triangles[i];
+            int v2 = triangles[i + 1];
+            int v3 = triangles[i + 2];
+
+            int v4 = GetOrCreateEdgePoint(v1, v2, vertices, uvs, newUVs);
+            int v5 = GetOrCreateEdgePoint(v2, v3, vertices, uvs, newUVs);
+            int v6 = GetOrCreateEdgePoint(v3, v1, vertices, uvs, newUVs);
+
+            newTriangles.Add(v1);
+            newTriangles.Add(v4);
+            newTriangles.Add(v6);
+
+            newTriangles.Add(v4);
+            newTriangles.Add(v2);
+            newTriangles.Add(v5);
+
+            newTriangles.Add(v6);
+            newTriangles.Add(v5);
+            newTriangles.Add(v3);
+
+            newTriangles.Add(v4);
+            newTriangles.Add(v5);
+            newTriangles.Add(v6);
         }
 
-        // Créer un nouveau point pour chaque arête
-        Dictionary<Edge, int> edgePoints = new Dictionary<Edge, int>();
-        for (int i = 0; i < originalTriangleCount; i++)
+        for (int i = 0; i < newTriangles.Count; i++)
         {
-            int v1 = triangles[i * 3];
-            int v2 = triangles[i * 3 + 1];
-            int v3 = triangles[i * 3 + 2];
-
-            int v4 = GetEdgePoint(v1, v2, vertices, edgePoints);
-            int v5 = GetEdgePoint(v2, v3, vertices, edgePoints);
-            int v6 = GetEdgePoint(v3, v1, vertices, edgePoints);
-
-            triangles[i * 3] = v1;
-            triangles[i * 3 + 1] = v4;
-            triangles[i * 3 + 2] = v6;
-
-            triangles.Add(v4);
-            triangles.Add(v2);
-            triangles.Add(v5);
-
-            triangles.Add(v6);
-            triangles.Add(v5);
-            triangles.Add(v3);
-
-            triangles.Add(v4);
-            triangles.Add(v5);
-            triangles.Add(v6);
+            int newIndex = newTriangles[i];
+            if (newIndex >= originalVertexCount)
+            {
+                newTriangles[i] = newIndex - originalVertexCount;
+            }
         }
 
-        // Réorganiser les triangles
-        for (int i = originalTriangleCount - 1; i >= 0; i--)
-        {
-            int offset = originalVertexCount + i * 3;
-
-            triangles.RemoveAt(offset);
-            triangles.RemoveAt(offset + 1);
-            triangles.RemoveAt(offset + 2);
-        }
-
-        newMesh.vertices = vertices.ToArray();
-        newMesh.triangles = triangles.ToArray();
+        newMesh.SetVertices(vertices);
+        newMesh.SetTriangles(newTriangles, 0);
+        newMesh.SetUVs(0, newUVs);
         newMesh.RecalculateNormals();
+
+        newMesh.bounds = mesh.bounds;
+        newMesh.colors = mesh.colors;
 
         return newMesh;
     }
 
-    private int GetEdgePoint(int v1, int v2, List<Vector3> vertices, Dictionary<Edge, int> edgePoints)
+    private int GetOrCreateEdgePoint(int v1, int v2, List<Vector3> vertices, List<Vector2> uvs, List<Vector2> newUVs)
     {
-        Edge edge = new Edge(v1, v2);
-
-        if (edgePoints.ContainsKey(edge))
+        int edgePointIndex = FindEdgePoint(v1, v2, vertices);
+        if (edgePointIndex != -1)
         {
-            return edgePoints[edge];
+            return edgePointIndex;
         }
-        else
-        {
-            Vector3 edgePoint = (vertices[v1] + vertices[v2]) / 2f;
-            int newPointIndex = vertices.Count;
-            vertices.Add(edgePoint);
 
-            edgePoints.Add(edge, newPointIndex);
-            return newPointIndex;
-        }
+        Vector3 edgePoint = (vertices[v1] + vertices[v2]) / 2f;
+        int newPointIndex = vertices.Count;
+        vertices.Add(edgePoint);
+
+        Vector2 uv = (uvs[v1] + uvs[v2]) / 2f;
+        newUVs.Add(uv);
+
+        return newPointIndex;
     }
 
-    private struct Edge
+    private int FindEdgePoint(int v1, int v2, List<Vector3> vertices)
     {
-        public int vertexIndex1;
-        public int vertexIndex2;
-
-        public Edge(int v1, int v2)
+        for (int i = vertices.Count - 1; i >= 0; i--)
         {
-            vertexIndex1 = Mathf.Min(v1, v2);
-            vertexIndex2 = Mathf.Max(v1, v2);
+            if (vertices[i] == (vertices[v1] + vertices[v2]) / 2f)
+            {
+                return i;
+            }
         }
+
+        return -1;
     }
 }
