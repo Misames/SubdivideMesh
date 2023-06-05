@@ -17,6 +17,8 @@ public class LoopAlgo : MonoBehaviour
         Mesh originalMesh = meshFilter.mesh;
         Mesh newMesh = new Mesh();
         Mesh subMesh = new Mesh();
+        subMesh.vertices = new Vector3[originalMesh.triangles.Length / 3 + originalMesh.vertexCount];
+        subMesh.triangles = new int[originalMesh.triangles.Length * 4];
 
         //créer un nouveau point pour chaque face
         for (int i=0; i<originalMesh.triangles.Length; i+=3)
@@ -120,8 +122,6 @@ public class LoopAlgo : MonoBehaviour
         meshFilter.mesh = subMesh;
     }
 
-   
 
-    //Methode getEdge
     
 }
