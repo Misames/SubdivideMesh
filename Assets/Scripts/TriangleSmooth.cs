@@ -37,13 +37,16 @@ public class TriangleSmooth : MonoBehaviour
         {
             SubdivideMesh(originalMesh);
             originalMesh = meshFilter.mesh;
-        }
-
-        // Smoothing
-        for (int i = 0; i < smoothingIterations; i++)
-        {
+            //ici on applique le lissage autant de fois que l'on subdivise
             SmoothMesh();
         }
+
+        // Smoothing if we want to control the amount of smoothing
+    //    for (int i = 0; i < smoothingIterations; i++)
+    //    {
+    //        SmoothMesh();
+    //    }
+
     }
 
     /// <summary>
