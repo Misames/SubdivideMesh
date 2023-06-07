@@ -408,8 +408,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 865974208}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a316b2c543bdb9944a49e4502b2040de, type: 3}
+  m_Script: {fileID: 11500000, guid: 0a32c8796b380e542a139c5491d161ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  subdivisionCount: 1
-  smoothingAmount: 0.1
+  meshFilter: {fileID: 865974212}
+  subdivisionIterations: 2
+  smoothingIterations: 1
+  smoothingAmount: 0.3

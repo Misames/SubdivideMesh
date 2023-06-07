@@ -1,3 +1,18 @@
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////// This script is The only working script for the project.//////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//- Le script suivant réalise la subdivision de maillage en utilisant l'algorithme de subdivision de loop.
+//- La première partie du script subdivise le maillage en triangles plus petits.
+//- La deuxième partie du script lisse le maillage en déplaçant les sommets vers le centre de leurs voisins.
+//- Le script est attaché à un objet dans la scène et utilise un MeshFilter pour obtenir le maillage d'origine 
+//et mettre à jour le maillage de l'objet avec le maillage subdivisé et lissé.
+//- Il faut jouer avec les paramètres subdivisionIterations, smoothingIterations et smoothingAmount pour obtenir
+//le résultat souhaité.
+
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -94,6 +109,7 @@ public class TriangleSmooth : MonoBehaviour
         subdividedMesh.triangles = subdividedTriangles.ToArray();
         subdividedMesh.RecalculateNormals();
         subdividedMesh.RecalculateBounds();
+        subdividedMesh.Optimize();
 
         // Set the new mesh to the mesh filter
         meshFilter.mesh = subdividedMesh;
@@ -138,5 +154,6 @@ public class TriangleSmooth : MonoBehaviour
         mesh.vertices = smoothedVertices;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
+        mesh.Optimize();
     }
 }
