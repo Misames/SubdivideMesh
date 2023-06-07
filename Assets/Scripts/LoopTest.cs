@@ -33,12 +33,10 @@ public class LoopTest : MonoBehaviour
         newMesh.uv = mesh.uv;
         newMesh.tangents = mesh.tangents;
 
-
         List<Vector3> vertices = new List<Vector3>(mesh.vertices);
         List<int> triangles = new List<int>(mesh.triangles);
         List<Vector2> uvs = new List<Vector2>(mesh.uv);
         List<Vector4> tangents = new List<Vector4>(mesh.tangents);
-
 
         // Make sure that the uvs list has the same number of elements as the vertices list
         if (uvs.Count < vertices.Count)
@@ -50,7 +48,6 @@ public class LoopTest : MonoBehaviour
         }
 
         int originalVertexCount = vertices.Count;
-        int originalTriangleCount = triangles.Count / 3;
 
         List<int> newTriangles = new List<int>();
         List<Vector2> newUVs = new List<Vector2>();
@@ -83,6 +80,7 @@ public class LoopTest : MonoBehaviour
             newTriangles.Add(v6);
         }
 
+        // Update the new triangles indices if necessary
         for (int i = 0; i < newTriangles.Count; i++)
         {
             int newIndex = newTriangles[i];
@@ -94,11 +92,15 @@ public class LoopTest : MonoBehaviour
 
         newMesh.SetVertices(vertices);
         newMesh.SetTriangles(newTriangles, 0);
-        newMesh.SetUVs(0, newUVs);
+        newMesh.SetUVs(0, newUVs.ToArray()); // Convert the list to an array
+        newMesh.RecalculateBounds();
         newMesh.RecalculateNormals();
+        newMesh.RecalculateTangents();
 
         newMesh.bounds = mesh.bounds;
         newMesh.colors = mesh.colors;
+        newMesh.normals = mesh.normals;
+        newMesh.subMeshCount = mesh.subMeshCount;
 
         return newMesh;
     }
@@ -125,7 +127,7 @@ public class LoopTest : MonoBehaviour
     {
         for (int i = vertices.Count - 1; i >= 0; i--)
         {
-            if (vertices[i] == (vertices[v1] + vertices[v2]) / 2f)
+            if (Vector3.Distance(vertices[i], (vertices[v1] + vertices[v2]) / 2f) < 0.001f)
             {
                 return i;
             }
