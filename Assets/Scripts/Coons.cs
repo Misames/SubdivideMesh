@@ -4,21 +4,32 @@ using System.Collections.Generic;
 public class Coons : MonoBehaviour
 {
     private List<Vector3> controlPoints = new List<Vector3>();
+    private List<Vector3> horizontalPoints = new List<Vector3>();
     private List<int> indices = new List<int>();
-    private List<Vector3> inPoints = new List<Vector3>();
+
 
     private void Start()
     {
         CreateControlPoints();
         GetComponent<MeshFilter>().mesh = CreateMesh();
         Chaikin();
-        ShapeMesh();
+        UpdateMesh();
     }
 
     private void Chaikin(uint iteration = 3)
     {
         for (int i = 0; i < iteration; i++)
             controlPoints = ChaikinIteration(controlPoints);
+
+        horizontalPoints = SubdivideLine(horizontalPoints);
+
+        foreach (var ligne in horizontalPoints)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.transform.localScale /= 70;
+            go.transform.position = ligne + this.transform.position;
+            Instantiate<GameObject>(go);
+        }
     }
 
     private List<Vector3> SubdivideLine(List<Vector3> interlignes)
@@ -53,6 +64,8 @@ public class Coons : MonoBehaviour
 
         for (int i = 0; i < numPoints - 1; i++)
         {
+            if (GetCuttingPoint() == i) continue;
+
             // Calculer les points de contrôle intermédiaires sur les segments
             Vector3 pointA = points[i];
             Vector3 pointB = points[i + 1];
@@ -67,32 +80,25 @@ public class Coons : MonoBehaviour
         return updatedPoints;
     }
 
-
-    private void ShapeObject()
-    {
-        foreach (var ligne in inPoints)
-        {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            go.transform.localScale /= 70;
-            go.transform.position = ligne + this.transform.position;
-            Instantiate<GameObject>(go);
-        }
-    }
-
-    private void ShapeMesh()
+    private void UpdateMesh()
     {
         indices.Clear();
+        int cuttingPoint = GetCuttingPoint();
 
         // Relie chaque point pour former C1 et C2
         for (int i = 0; i < controlPoints.Count - 1; i++)
         {
-            if (i == controlPoints.Count - 1) continue;
+            if (i == cuttingPoint) continue;
             indices.Add(i);
             indices.Add(i + 1);
         }
 
-        indices.Add(controlPoints.Count - 1);
-        indices.Add(0);
+        // Relier les points de contrôle de C1 à C2 avec des segments
+        for (int i = 0; i <= cuttingPoint; i++)
+        {
+            indices.Add(i);
+            indices.Add(i + cuttingPoint + 1);
+        }
 
         Mesh newMesh = new Mesh();
         newMesh.SetVertices(controlPoints);
@@ -108,19 +114,11 @@ public class Coons : MonoBehaviour
         controlPoints.Add(new Vector3(2, 1, 0));
         controlPoints.Add(new Vector3(3, 0, 0));
 
-        // C3
-        controlPoints.Add(new Vector3(3, 1, 1));
-        controlPoints.Add(new Vector3(3, 1, 2));
-
         // Coordonnées pour la deuxième courbe (C2)
-        controlPoints.Add(new Vector3(3, 0, 3));
-        controlPoints.Add(new Vector3(2, 1, 3));
-        controlPoints.Add(new Vector3(1, 1, 3));
-        controlPoints.Add(new Vector3(0, 0, 3));
-
-        // C4
-        controlPoints.Add(new Vector3(0, 1, 2));
-        controlPoints.Add(new Vector3(0, 1, 1));
+        controlPoints.Add(new Vector3(0 + 1, 0 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(1 + 1, 1 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(2 + 1, 1 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(3 + 1, 0 - 1, 1 + 2));
     }
 
     private Mesh CreateMesh()
@@ -128,15 +126,12 @@ public class Coons : MonoBehaviour
         Mesh mesh = new Mesh();
         int cuttingPoint = GetCuttingPoint();
 
-        for (int i = 0; i <= controlPoints.Count - 1; i++)
+        for (int i = 0; i < controlPoints.Count - 1; i++)
         {
-            if (i == controlPoints.Count - 1) continue;
+            if (i == cuttingPoint) continue;
             indices.Add(i);
             indices.Add(i + 1);
         }
-
-        indices.Add(controlPoints.Count - 1);
-        indices.Add(0);
 
         mesh.SetVertices(controlPoints);
         mesh.SetIndices(indices, MeshTopology.Lines, 0);
