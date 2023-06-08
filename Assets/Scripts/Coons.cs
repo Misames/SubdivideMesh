@@ -14,10 +14,38 @@ public class Coons : MonoBehaviour
         UpdateMesh();
     }
 
-    private void Chaikin(uint iteration = 5)
+    private void Chaikin(uint iteration = 3)
     {
+        List<Vector3> interlignes = new List<Vector3>();
+
         for (int i = 0; i < iteration; i++)
             controlPoints = ChaikinIteration(controlPoints);
+
+        interlignes = grid(interlignes);
+
+        foreach (var ligne in interlignes)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.transform.localScale /= 70;
+            go.transform.position = ligne + this.transform.position;
+            Instantiate<GameObject>(go);
+        }
+    }
+
+    private List<Vector3> grid(List<Vector3> interlignes)
+    {
+        int length = GetCuttingPoint();
+
+        for (int i = 0; i <= length; i++)
+        {
+            for (int j = 1; j < length; j++)
+            {
+                float z = (float)j / length;
+                interlignes.Add(new Vector3(controlPoints[i].x, controlPoints[i].y, z));
+            }
+        }
+
+        return interlignes;
     }
 
     private List<Vector3> ChaikinIteration(List<Vector3> points)
@@ -78,10 +106,10 @@ public class Coons : MonoBehaviour
         controlPoints.Add(new Vector3(3, 0, 0));
 
         // Coordonnées pour la deuxième courbe (C2)
-        controlPoints.Add(new Vector3(0 - 1, 0, 5));
-        controlPoints.Add(new Vector3(1 - 1, 1, 5));
-        controlPoints.Add(new Vector3(2 - 1, 1, 5));
-        controlPoints.Add(new Vector3(3 - 1, 0, 5));
+        controlPoints.Add(new Vector3(0, 0, 1));
+        controlPoints.Add(new Vector3(1, 1, 1));
+        controlPoints.Add(new Vector3(2, 1, 1));
+        controlPoints.Add(new Vector3(3, 0, 1));
     }
 
     private Mesh CreateMesh()
@@ -101,6 +129,7 @@ public class Coons : MonoBehaviour
         return mesh;
     }
 
+    // Dernier point du segment avant de passer à l'autre
     private int GetCuttingPoint()
     {
         int j = 0;
