@@ -4,7 +4,9 @@ using System.Collections.Generic;
 public class Coons : MonoBehaviour
 {
     private List<Vector3> controlPoints = new List<Vector3>();
+    private List<Vector3> horizontalPoints = new List<Vector3>();
     private List<int> indices = new List<int>();
+
 
     private void Start()
     {
@@ -16,14 +18,12 @@ public class Coons : MonoBehaviour
 
     private void Chaikin(uint iteration = 3)
     {
-        List<Vector3> interlignes = new List<Vector3>();
-
         for (int i = 0; i < iteration; i++)
             controlPoints = ChaikinIteration(controlPoints);
 
-        interlignes = grid(interlignes);
+        horizontalPoints = SubdivideLine(horizontalPoints);
 
-        foreach (var ligne in interlignes)
+        foreach (var ligne in horizontalPoints)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             go.transform.localScale /= 70;
@@ -32,16 +32,25 @@ public class Coons : MonoBehaviour
         }
     }
 
-    private List<Vector3> grid(List<Vector3> interlignes)
+    private List<Vector3> SubdivideLine(List<Vector3> interlignes)
     {
         int length = GetCuttingPoint();
 
         for (int i = 0; i <= length; i++)
         {
-            for (int j = 1; j < length; j++)
+            for (int j = 1; j <= length; j++)
             {
-                float z = (float)j / length;
-                interlignes.Add(new Vector3(controlPoints[i].x, controlPoints[i].y, z));
+                float step = (float)j / (length + 1);
+
+                Vector3 startPoint = controlPoints[i];
+                Vector3 endPoint = controlPoints[i + length + 1];
+
+                float x = Mathf.Lerp(startPoint.x, endPoint.x, step);
+                float y = Mathf.Lerp(startPoint.y, endPoint.y, step);
+                float z = Mathf.Lerp(startPoint.z, endPoint.z, step);
+
+                Vector3 newPoint = new Vector3(x, y, z);
+                interlignes.Add(newPoint);
             }
         }
 
@@ -106,10 +115,10 @@ public class Coons : MonoBehaviour
         controlPoints.Add(new Vector3(3, 0, 0));
 
         // Coordonnées pour la deuxième courbe (C2)
-        controlPoints.Add(new Vector3(0, 0, 1));
-        controlPoints.Add(new Vector3(1, 1, 1));
-        controlPoints.Add(new Vector3(2, 1, 1));
-        controlPoints.Add(new Vector3(3, 0, 1));
+        controlPoints.Add(new Vector3(0 + 1, 0 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(1 + 1, 1 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(2 + 1, 1 - 1, 1 + 2));
+        controlPoints.Add(new Vector3(3 + 1, 0 - 1, 1 + 2));
     }
 
     private Mesh CreateMesh()
