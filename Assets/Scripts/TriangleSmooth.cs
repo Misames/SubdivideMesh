@@ -20,7 +20,7 @@ public class TriangleSmooth : MonoBehaviour
 {
     public MeshFilter meshFilter;
     public int subdivisionIterations = 1;
-    public int smoothingIterations = 1;
+    //public int smoothingIterations = 1;
     public float smoothingAmount = 0.5f;
 
     private void Start()
@@ -42,49 +42,49 @@ public class TriangleSmooth : MonoBehaviour
         }
 
         // Smoothing if we want to control the amount of smoothing
-    //    for (int i = 0; i < smoothingIterations; i++)
-    //    {
-    //        SmoothMesh();
-    //    }
+        //for (int i = 0; i < smoothingIterations; i++)
+        //{
+        //     SmoothMesh();
+        //}
 
     }
 
     /// <summary>
-    /// Subdivides the mesh using Loop subdivision algorithm.
+    /// subdivise le maillage en triangles plus petits.
     /// </summary>
     private void SubdivideMesh(Mesh mesh)
     {
-        // Get original vertices and triangles
+        // Récupérer les sommets et les triangles du maillage original
         Vector3[] originalVertices = mesh.vertices;
         int[] originalTriangles = mesh.triangles;
 
-        // Create new lists for subdivided vertices and triangles
+        // Les listes sont utilisées pour ajouter de nouveaux sommets et triangles au fur et à mesure
         List<Vector3> subdividedVertices = new List<Vector3>(originalVertices);
         List<int> subdividedTriangles = new List<int>(originalTriangles);
 
-        // Loop through each triangle and subdivide it into 4 new triangles
+        // Récupérer le nombre de triangles et l'index du premier sommet du triangle courant
         int triangleCount = originalTriangles.Length / 3;
         int vertexIndex = subdividedVertices.Count;
 
     
         for (int i = 0; i < triangleCount; i++)
         {
-            // Get the vertices of the current triangle we are iterating on
+            // Récupérer les sommets du triangle courant sur lequel on itere
             int vertexA = originalTriangles[i * 3];
             int vertexB = originalTriangles[i * 3 + 1];
             int vertexC = originalTriangles[i * 3 + 2];
 
-            // Get the midpoint of each edge in the current triangle we are iterating on
+            // Recuperer le point milieu de chaque arrete du triangle courant sur lequel on itere
             Vector3 midPointAB = (originalVertices[vertexA] + originalVertices[vertexB]) * 0.5f;
             Vector3 midPointBC = (originalVertices[vertexB] + originalVertices[vertexC]) * 0.5f;
             Vector3 midPointCA = (originalVertices[vertexC] + originalVertices[vertexA]) * 0.5f;
 
-            // Add the new vertices to the list of subdivided vertices and get their indices
+            // Ajouter les nouveaux sommets à la liste des sommets subdivisés et récupérer leurs indices
             int midPointABIndex = vertexIndex++;
             int midPointBCIndex = vertexIndex++;
             int midPointCAIndex = vertexIndex++;
 
-            // Add the new triangles to the list of subdivided triangles using the indices of the new vertices
+            // Ajouter les nouveaux triangles à la liste des triangles subdivisés en utilisant les indices des nouveaux sommets
             subdividedVertices.Add(midPointAB);
             subdividedVertices.Add(midPointBC);
             subdividedVertices.Add(midPointCA);
@@ -106,7 +106,7 @@ public class TriangleSmooth : MonoBehaviour
             subdividedTriangles.Add(midPointCAIndex);
         }
 
-        // Create a new mesh and apply the subdivided vertices and triangles to it
+        // Créer un nouveau maillage et appliquer les sommets et les triangles subdivisés
         Mesh subdividedMesh = new Mesh();
         subdividedMesh.vertices = subdividedVertices.ToArray();
         subdividedMesh.triangles = subdividedTriangles.ToArray();
@@ -114,32 +114,35 @@ public class TriangleSmooth : MonoBehaviour
         subdividedMesh.RecalculateBounds();
         subdividedMesh.Optimize();
 
-        // Set the new mesh to the mesh filter
+        // Application du maillage subdivisé au maillage de l'objet
         meshFilter.mesh = subdividedMesh;
     }
 
     /// <summary>
-    /// Smooths the mesh by moving each vertex to the average position of its neighboring vertices.
+    /// lissage du mesh en déplaçant chaque sommet vers la position moyenne de ses sommets voisins.
     /// </summary>
     private void SmoothMesh()
     {
-        // Get the mesh and its vertices and create a new array for the smoothed vertices
+        // Récupérer le maillage et ses sommets et créer un nouveau tableau pour les sommets lissés
         Mesh mesh = meshFilter.mesh;
         Vector3[] vertices = mesh.vertices;
         Vector3[] smoothedVertices = new Vector3[vertices.Length];
 
-        // Loop through each vertex and get its neighboring vertices and move it to the average position of its neighbors
+        // Boucle sur les sommets du maillage et récupère les sommets voisins et les déplace vers la position moyenne de leurs voisins
         for (int i = 0; i < vertices.Length; i++)
         {
             Vector3 averagePosition = Vector3.zero;
             int neighborCount = 0;
 
-            // Loop through each neighboring vertex
+ 
+            // boucle sur les sommets voisins 
             for (int j = 0; j < mesh.vertexCount; j++)
             {
                 if (i == j)
                     continue;
 
+                // Verifier la distance entre les sommets voisins et le sommet courant et si elle est inférieure à la valeur smoothingAmount
+                //smoothing amount détermine a quel point on lisse le mesh
                 float distance = Vector3.Distance(vertices[i], vertices[j]);
                 if (distance <= smoothingAmount)
                 {
@@ -148,12 +151,12 @@ public class TriangleSmooth : MonoBehaviour
                 }
             }
 
-            // Get the average position of the neighboring vertices and move the current vertex to that position
+            // Recuperer la position moyenne des sommets voisins et déplacer le sommet courant vers cette position
             averagePosition /= neighborCount;
             smoothedVertices[i] = averagePosition;
         }
 
-        // Set the smoothed vertices to the mesh and recalculate its normals
+        // Définir les sommets lissés sur le maillage et recalculer ses normales
         mesh.vertices = smoothedVertices;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
